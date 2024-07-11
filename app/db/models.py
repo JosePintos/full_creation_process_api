@@ -1,5 +1,5 @@
 from typing import Optional, List
-from sqlalchemy import ForeignKey, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -17,9 +17,7 @@ class DBLead(Base):
     direccion: Mapped[Optional[str]]
     tel: Mapped[Optional[int]]
 
-    cursados: Mapped[List["DBCursado"]] = relationship(
-        "DBCursado", back_populates="lead"
-    )
+    cursados: Mapped[List["DBCursado"]] = relationship(back_populates="lead")
 
 
 class DBCarrera(Base):
@@ -28,49 +26,60 @@ class DBCarrera(Base):
     carrera_id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(nullable=False)
 
-    materias: Mapped[List["DBMateria"]] = relationship(
-        "DBMateria", back_populates="carrera"
-    )
-
 
 class DBMateria(Base):
     __tablename__ = "materias"
 
     materia_id: Mapped[int] = mapped_column(primary_key=True, index=True)
     nombre: Mapped[str] = mapped_column(nullable=False)
-    carrera_id: Mapped[int] = mapped_column(ForeignKey("carreras.id"))
-
-    carrera: Mapped["DBCarrera"] = relationship("DBCarrera", back_populates="materias")
+    carrera_id: Mapped[int] = mapped_column(ForeignKey("carreras.carrera_id"))
 
 
 class DBCursado(Base):
     __tablename__ = "cursados"
 
     año_cursado: Mapped[int] = mapped_column(primary_key=True, index=True)
-    carrera_id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    lead_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    carrera_id: Mapped[int] = mapped_column(
+        ForeignKey("carreras.carrera_id"), primary_key=True, index=True
+    )
+    lead_id: Mapped[int] = mapped_column(
+        ForeignKey("leads.lead_id"), primary_key=True, index=True
+    )
     universidad: Mapped[Optional[str]]
-
-    UniqueConstraint("carrera_id", "lead_id")
 
     lead: Mapped["DBLead"] = relationship("DBLead", back_populates="cursados")
     carrera: Mapped["DBCarrera"] = relationship("DBCarrera")
     inscripciones: Mapped[List["DBInscripcionMateria"]] = relationship(
-        "DBInscripcionMateria", back_populates="cursados"
+        "DBInscripcionMateria",
+        back_populates="cursado",
+        primaryjoin="and_(DBCursado.año_cursado==DBInscripcionMateria.año_cursado, DBCursado.carrera_id==DBInscripcionMateria.carrera_id, DBCursado.lead_id==DBInscripcionMateria.lead_id)",
     )
 
 
 class DBInscripcionMateria(Base):
     __tablename__ = "inscripcion_materia"
 
-    año_cursado: Mapped[int] = mapped_column(primary_key=True, index=True)
-    carrera_id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    lead_id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    materia_id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    veces_cursada: Mapped[int] = mapped_column(nullable=False)
+    año_cursado: Mapped[int] = mapped_column(
+        ForeignKey("cursados.año_cursado"), primary_key=True, index=True
+    )
+    carrera_id: Mapped[int] = mapped_column(
+        ForeignKey("cursados.carrera_id"), primary_key=True, index=True
+    )
+    lead_id: Mapped[int] = mapped_column(
+        ForeignKey("cursados.lead_id"), primary_key=True, index=True
+    )
+    materia_id: Mapped[int] = mapped_column(
+        ForeignKey("materias.materia_id"), primary_key=True, index=True
+    )
+    veces_cursada: Mapped[int]
 
-    UniqueConstraint("carrera_id", "lead_id", "materia_id")
+    cursado: Mapped["DBCursado"] = relationship(
+        "DBCursado",
+        back_populates="inscripciones",
+        primaryjoin="and_(DBInscripcionMateria.año_cursado==DBCursado.año_cursado, DBInscripcionMateria.carrera_id==DBCursado.carrera_id, DBInscripcionMateria.lead_id==DBCursado.lead_id)",
+    )
+    materia: Mapped["DBMateria"] = relationship("DBMateria", foreign_keys=[materia_id])
 
-    materia: Mapped["DBMateria"] = relationship("DBMateria")
-    carrera: Mapped["DBCarrera"] = relationship("DBCarrera")
-    lead: Mapped["DBLead"] = relationship("DBLead")
+    __table_args__ = (
+        UniqueConstraint("año_cursado", "carrera_id", "lead_id", name="uq_inscripcion"),
+    )

@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from db.models import DBCarrera, DBCursado, DBInscripcionMateria, DBLead, DBMateria
-import logging
 from fastapi import HTTPException
+
+
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +14,7 @@ class LeadRepository:
         self.db = db
 
     def create_db_lead(self, db_lead: DBLead) -> DBLead:
+        logger.debug(f"debug: {db_lead}")
         self.db.add(db_lead)
         self.db.commit()
         self.db.refresh(db_lead)
@@ -35,30 +38,33 @@ class CarreraRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create_db_carrera(self, db_carrera: DBCarrera) -> DBCarrera:
-        # db_carrera = DBCarrera(**carrera.model_dump(exclude_none=True))
-        self.db.add(db_carrera)
-        self.db.commit()
-        self.db.refresh(db_carrera)
+    def read_or_create_carrera(self, carrera_nombre: str) -> DBCarrera:
+        db_carrera = self.db.execute(
+            select(DBCarrera).where(DBCarrera.nombre == carrera_nombre)
+        ).scalar()
+        logger.debug(f"carrera: {db_carrera}")
+        if not db_carrera:
+            db_carrera = DBCarrera(nombre=carrera_nombre)
+            self.db.add(db_carrera)
+            self.db.commit()
+            self.db.refresh(db_carrera)
         return db_carrera
-
-    def read_all_db_carrera(self) -> DBCarrera:
-        return self.db.execute(select(DBCarrera)).scalars().all()
 
 
 class MateriaRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create_materia(self, db_materia: DBMateria) -> DBMateria:
-        # db_materia = DBMateria(**materia.model_dump(exclude_none=True))
-        self.db.add(db_materia)
-        self.db.commit()
-        self.db.refresh(db_materia)
+    def read_or_create_materia(self, materia_nombre: str) -> DBMateria:
+        db_materia = self.db.execute(
+            select(DBMateria).where(DBMateria.nombre == materia_nombre)
+        ).scalar()
+        if not db_materia:
+            db_materia = DBMateria(nombre=materia_nombre)
+            self.db.add(db_materia)
+            self.db.commit()
+            self.db.refresh(db_materia)
         return db_materia
-
-    def read_materia(self) -> DBMateria:
-        return self.db.execute(select(DBMateria)).scalars().all()
 
 
 class CursadoRepository:
@@ -66,7 +72,6 @@ class CursadoRepository:
         self.db = db
 
     def create_cursado(self, db_cursado: DBCursado) -> DBCursado:
-        # db_cursado = DBCursado(**cursado.model_dump(exclude_none=True))
         self.db.add(db_cursado)
         self.db.commit()
         self.db.refresh(db_cursado)
@@ -81,15 +86,13 @@ class InscripcionMateriaRepository:
         self.db = db
 
     def create_inscripcion_materia(
-        self, db_insc: DBInscripcionMateria
+        self,
+        db_inscripcion: DBInscripcionMateria,
     ) -> DBInscripcionMateria:
-        # db_insc = DBInscripcionMateria(
-        #     **inscripcion_materia.model_dump(exclude_none=True)
-        # )
-        self.db.add(db_insc)
+        self.db.add(db_inscripcion)
         self.db.commit()
-        self.db.refresh(db_insc)
-        return db_insc
+        self.db.refresh(db_inscripcion)
+        return db_inscripcion
 
     def read_inscripcion_materia(self) -> DBMateria:
         return self.db.execute(select(DBInscripcionMateria)).scalars().all()
