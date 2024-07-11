@@ -1,6 +1,6 @@
-from typing import Optional
-from sqlalchemy import ForeignKey, ForeignKeyConstraint
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from typing import Optional, List
+from sqlalchemy import ForeignKey, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -10,26 +10,37 @@ class Base(DeclarativeBase):
 class DBLead(Base):
     __tablename__ = "leads"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    nombre: Mapped[str]
-    apellido: Mapped[str]
+    lead_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    nombre: Mapped[str] = mapped_column(nullable=False)
+    apellido: Mapped[str] = mapped_column(nullable=False)
     email: Mapped[Optional[str]]
+    direccion: Mapped[Optional[str]]
     tel: Mapped[Optional[int]]
+
+    cursados: Mapped[List["DBCursado"]] = relationship(
+        "DBCursado", back_populates="lead"
+    )
 
 
 class DBCarrera(Base):
     __tablename__ = "carreras"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    nombre: Mapped[str]
+    carrera_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    nombre: Mapped[str] = mapped_column(nullable=False)
+
+    materias: Mapped[List["DBMateria"]] = relationship(
+        "DBMateria", back_populates="carrera"
+    )
 
 
 class DBMateria(Base):
     __tablename__ = "materias"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    nombre: Mapped[str]
+    materia_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    nombre: Mapped[str] = mapped_column(nullable=False)
     carrera_id: Mapped[int] = mapped_column(ForeignKey("carreras.id"))
+
+    carrera: Mapped["DBCarrera"] = relationship("DBCarrera", back_populates="materias")
 
 
 class DBCursado(Base):
@@ -40,8 +51,12 @@ class DBCursado(Base):
     lead_id: Mapped[int] = mapped_column(primary_key=True, index=True)
     universidad: Mapped[Optional[str]]
 
-    __table_args__ = (
-        ForeignKeyConstraint(["carrera_id", "lead_id"], ["carreras.id", "leads.id"]),
+    UniqueConstraint("carrera_id", "lead_id")
+
+    lead: Mapped["DBLead"] = relationship("DBLead", back_populates="cursados")
+    carrera: Mapped["DBCarrera"] = relationship("DBCarrera")
+    inscripciones: Mapped[List["DBInscripcionMateria"]] = relationship(
+        "DBInscripcionMateria", back_populates="cursados"
     )
 
 
@@ -52,11 +67,10 @@ class DBInscripcionMateria(Base):
     carrera_id: Mapped[int] = mapped_column(primary_key=True, index=True)
     lead_id: Mapped[int] = mapped_column(primary_key=True, index=True)
     materia_id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    veces_cursada: Mapped[int]
+    veces_cursada: Mapped[int] = mapped_column(nullable=False)
 
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["carrera_id", "lead_id", "materia_id"],
-            ["carreras.id", "leads.id", "materias.id"],
-        ),
-    )
+    UniqueConstraint("carrera_id", "lead_id", "materia_id")
+
+    materia: Mapped["DBMateria"] = relationship("DBMateria")
+    carrera: Mapped["DBCarrera"] = relationship("DBCarrera")
+    lead: Mapped["DBLead"] = relationship("DBLead")
