@@ -6,8 +6,8 @@ from .repositories import (
     MateriaRepository,
 )
 from sqlalchemy.orm import Session
-from db.models import DBCursado, DBInscripcionMateria, DBLead
-from db.schemas import Lead, LeadCreate, InscripcionMateriaCreate, CursadoCreate
+from ..db.models import DBCursado, DBInscripcionMateria, DBLead
+from ..db.schemas import Lead, LeadCreate, InscripcionMateriaCreate, CursadoCreate
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class LeadService:
         # add cursados with carrera and materias
         for cursado in lead.cursados:
             self.add_cursado(db_lead.lead_id, cursado)
-        return db_lead
+        return db_lead.lead_id
 
     def add_cursado(self, lead_id: int, cursado: CursadoCreate) -> DBCursado:
         db_carrera = self.carrera_repository.read_or_create_carrera(
@@ -50,7 +50,7 @@ class LeadService:
         )
         for inscripcion in cursado.inscripciones:
             db_materia = self.materia_repository.read_or_create_materia(
-                inscripcion.materia.nombre
+                inscripcion.materia.nombre, db_carrera.carrera_id
             )
             self.add_inscripcion_materia(
                 lead_id,

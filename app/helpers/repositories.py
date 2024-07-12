@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from db.models import DBCarrera, DBCursado, DBInscripcionMateria, DBLead, DBMateria
+from ..db.models import DBCarrera, DBCursado, DBInscripcionMateria, DBLead, DBMateria
 from fastapi import HTTPException
 
 
@@ -43,11 +43,12 @@ class CarreraRepository:
             select(DBCarrera).where(DBCarrera.nombre == carrera_nombre)
         ).scalar()
         logger.debug(f"carrera: {db_carrera}")
-        if not db_carrera:
+        if db_carrera is None:
             db_carrera = DBCarrera(nombre=carrera_nombre)
             self.db.add(db_carrera)
             self.db.commit()
             self.db.refresh(db_carrera)
+        logger.debug(f"carrera 2: {db_carrera.__repr__()}")
         return db_carrera
 
 
@@ -55,15 +56,18 @@ class MateriaRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def read_or_create_materia(self, materia_nombre: str) -> DBMateria:
+    def read_or_create_materia(self, materia_nombre: str, carrera_id: int) -> DBMateria:
         db_materia = self.db.execute(
             select(DBMateria).where(DBMateria.nombre == materia_nombre)
         ).scalar()
-        if not db_materia:
-            db_materia = DBMateria(nombre=materia_nombre)
+        logger.debug(f"materia: {db_materia} {materia_nombre}")
+        if db_materia is None:
+            db_materia = DBMateria(nombre=materia_nombre, carrera_id=carrera_id)
             self.db.add(db_materia)
             self.db.commit()
             self.db.refresh(db_materia)
+            logger.debug(f"materia if: {db_materia}")
+        logger.debug(f"materia 2: {db_materia.__repr__()}")
         return db_materia
 
 
@@ -89,9 +93,27 @@ class InscripcionMateriaRepository:
         self,
         db_inscripcion: DBInscripcionMateria,
     ) -> DBInscripcionMateria:
+        # logger.debug(f"insc: {db_inscripcion.__repr__()}")
+        # existent_inscripcion = self.db.execute(
+        #     select(DBInscripcionMateria).where(
+        #         DBInscripcionMateria.año_cursado == db_inscripcion.año_cursado,
+        #         DBInscripcionMateria.carrera_id == db_inscripcion.carrera_id,
+        #         DBInscripcionMateria.lead_id == db_inscripcion.lead_id,
+        #     )
+        # ).scalar()
+        # logger.debug(f"insc2: {existent_inscripcion.__repr__()}")
+        # if existent_inscripcion:
+        #     return existent_inscripcion
+
+        # if existent_inscripcion is None:
+        #     self.db.add(db_inscripcion)
+        #     self.db.commit()
+        #     self.db.refresh(db_inscripcion)
+        logger.debug(f"insc: {db_inscripcion.__repr__()}")
         self.db.add(db_inscripcion)
         self.db.commit()
         self.db.refresh(db_inscripcion)
+        logger.debug(f"insc: {db_inscripcion.__repr__()}")
         return db_inscripcion
 
     def read_inscripcion_materia(self) -> DBMateria:

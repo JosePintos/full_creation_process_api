@@ -1,6 +1,6 @@
-from fastapi import FastAPI, HTTPException, APIRouter
-from pydantic import BaseModel
-from routers.leads import router as leads_router
+from fastapi import FastAPI
+from app.routers.leads import router as leads_router
+
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
