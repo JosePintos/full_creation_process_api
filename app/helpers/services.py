@@ -6,8 +6,8 @@ from .repositories import (
     MateriaRepository,
 )
 from sqlalchemy.orm import Session
-from db.models import DBCursado, DBInscripcionMateria, DBLead
-from db.schemas import Lead, LeadCreate, InscripcionMateriaCreate, CursadoCreate
+from ..db.models import DBCursado, DBInscripcionMateria, DBLead
+from ..db.schemas import Lead, LeadCreate, InscripcionMateriaCreate, CursadoCreate
 
 
 class LeadService:

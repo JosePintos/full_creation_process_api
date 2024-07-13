@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers.leads import router as leads_router
+from .routers.leads import router as leads_router
 
 
 app = FastAPI()

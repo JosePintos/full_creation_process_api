@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
-from db.schemas import Lead, LeadCreate
-from db.connection import get_db
+from ..db.schemas import Lead, LeadCreate
+from ..db.connection import get_db
 from typing import List
-from helpers.services import LeadService
+from ..helpers.services import LeadService
 
 router = APIRouter(prefix="/leads")
 
