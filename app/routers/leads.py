@@ -1,16 +1,21 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Query
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 from ..db.schemas import Lead, LeadCreate
 from ..db.connection import get_db
-from typing import List
+from typing import List, Annotated
 from ..helpers.services import LeadService
 
 router = APIRouter(prefix="/leads")
 
 
 @router.get("/")
-def get_leads(request: Request, db: Session = Depends(get_db)) -> List[Lead]:
+def get_leads(
+    request: Request,
+    db: Session = Depends(get_db),
+    limit: Annotated[str | None, Query()] = 10,
+    offset: Annotated[str | None, Query()] = 0,
+) -> List[Lead]:
     """
     Obtiene todos los leads de la base de datos.
 
@@ -22,7 +27,7 @@ def get_leads(request: Request, db: Session = Depends(get_db)) -> List[Lead]:
         List[Lead]: Una lista de objetos Lead.
     """
     lead_service = LeadService(db)
-    leads = lead_service.read_all_leads()
+    leads = lead_service.read_all_leads(limit=limit, offset=offset)
     return leads
 
 

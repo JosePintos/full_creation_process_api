@@ -8,6 +8,7 @@ from .repositories import (
 from sqlalchemy.orm import Session
 from ..db.models import DBCursado, DBInscripcionMateria, DBLead
 from ..db.schemas import Lead, LeadCreate, InscripcionMateriaCreate, CursadoCreate
+from fastapi import Query
 
 
 class LeadService:
@@ -115,14 +116,14 @@ class LeadService:
             )
         )
 
-    def read_all_leads(self) -> list[DBLead]:
+    def read_all_leads(self, limit: Query, offset: Query) -> list[DBLead]:
         """
         Lee todos los leads de la base de datos.
 
         Returns:
             list[DBLead]: Lista de todos los objetos DBLead en la base de datos.
         """
-        return self.lead_repository.read_all_db_leads()
+        return self.lead_repository.read_all_db_leads(limit=limit, offset=offset)
 
     def read_lead(self, lead_id: int) -> DBLead:
         """

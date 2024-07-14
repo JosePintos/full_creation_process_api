@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from ..db.models import DBCarrera, DBCursado, DBInscripcionMateria, DBLead, DBMateria
-from fastapi import HTTPException
+from fastapi import HTTPException, Query
 
 
 class LeadRepository:
@@ -29,14 +29,21 @@ class LeadRepository:
         self.db.refresh(db_lead)
         return db_lead
 
-    def read_all_db_leads(self) -> list[DBLead]:
+    def read_all_db_leads(self, limit=Query, offset=Query) -> list[DBLead]:
         """
         Lee todos los leads de la base de datos.
+
+        Args:
+            limit (Query): Número máximo de resultados a devolver. Default 10
+            offset (Query): Número de resultados a saltar desde el inicio. Default 0
 
         Returns:
             list[DBLead]: Lista de todos los objetos DBLead en la base de datos.
         """
-        return self.db.execute(select(DBLead)).scalars().all()
+
+        return (
+            self.db.execute(select(DBLead).limit(limit).offset(offset)).scalars().all()
+        )
 
     def read_db_lead(self, lead_id: int) -> DBLead:
         """
