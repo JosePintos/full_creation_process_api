@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from .routers.leads import router as leads_router
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
