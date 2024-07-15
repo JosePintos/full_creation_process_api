@@ -13,7 +13,7 @@ Consiste en la implementación de una API REST y 3 endpoints para las operacione
 
 En cuanto al diseño, se optó por implementar un patrón Repository para separar la lógica de negocio de la lógica de base de datos y facilitar la escalabilidad. Además, se tienen las operaciones de los endpoints por separado pensando en la escalabilidad, en caso de que a futuro se necesiten crear más endpoints de entidades diferentes.
 
-Una cosa a recalcar es la característica de SQLAlchemy de facilitar el uso de dependency injection a la hora de crear y asignar una sesión de base de datos, asegurando la disponibilidad de una sesión en cada request a un endpoint. Si bien es algo hecho por un tercero, esta característica fomenta la modularidad y facilita el testing.
+Una cosa a recalcar es la característica de FastAPI de facilitar el uso de dependency injection, lo que me permitio crear una sesion de base de datos y cerrarla luego de usar la base de datos. El sistema de dependencias de FastAPI permite declarar dependencias usando funciones con 'yield'. Esto nos brinda disponibilidad de una sesión en cada request a un endpoint. Si bien es algo hecho por un tercero, esta característica fomenta la modularidad y facilita el testing.
 
 ## Diseño de la Base de Datos
 
