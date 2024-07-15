@@ -13,8 +13,12 @@ router = APIRouter(prefix="/leads")
 def get_leads(
     request: Request,
     db: Session = Depends(get_db),
-    limit: Annotated[str | None, Query()] = 10,
-    offset: Annotated[str | None, Query()] = 0,
+    limit: Annotated[
+        int, Query(10, description="Número máximo de resultados a devolver")
+    ] = 10,
+    offset: Annotated[
+        int, Query(0, description="Número de resultados a saltar desde el inicio")
+    ] = 0,
 ) -> List[Lead]:
     """
     Obtiene todos los leads de la base de datos.
