@@ -1,10 +1,13 @@
 from fastapi import APIRouter, HTTPException, Request, Query
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
-from ..db.schemas import Lead, LeadCreate
+from ..db.schemas import Lead, LeadCreate, LeadReturn, NotFoundException
 from ..db.connection import get_db
 from typing import List, Annotated
 from ..helpers.services import LeadService
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/leads")
 
@@ -14,10 +17,10 @@ def get_leads(
     request: Request,
     db: Session = Depends(get_db),
     limit: Annotated[
-        int, Query(10, description="Número máximo de resultados a devolver")
+        int | None, Query(description="Número máximo de resultados a devolver")
     ] = 10,
     offset: Annotated[
-        int, Query(0, description="Número de resultados a saltar desde el inicio")
+        int | None, Query(description="Número de resultados a saltar desde el inicio")
     ] = 0,
 ) -> List[Lead]:
     """
@@ -31,7 +34,10 @@ def get_leads(
         List[Lead]: Una lista de objetos Lead.
     """
     lead_service = LeadService(db)
-    leads = lead_service.read_all_leads(limit=limit, offset=offset)
+    try:
+        leads = lead_service.read_all_leads(limit=limit, offset=offset)
+    except NotFoundException as e:
+        raise HTTPException(status_code=400, detail=e.message) from e
     return leads
 
 
@@ -49,13 +55,17 @@ def get_lead(request: Request, lead_id: int, db: Session = Depends(get_db)) -> L
         Lead: El objeto Lead con el ID especificado.
     """
     lead_service = LeadService(db)
-    return lead_service.read_lead(lead_id)
+    try:
+        db_lead = lead_service.read_lead(lead_id)
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=e.message) from e
+    return db_lead
 
 
 @router.post("/")
 def add_lead(
     request: Request, lead_data: LeadCreate, db: Session = Depends(get_db)
-) -> Lead:
+) -> LeadReturn:
     """
     Agrega un nuevo lead a la base de datos.
 
@@ -75,4 +85,5 @@ def add_lead(
         new_lead = lead_service.create_lead(lead_data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return new_lead
+    logger.debug(f"{type(new_lead.lead_id)}")
+    return LeadReturn(**new_lead.__dict__)

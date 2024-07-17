@@ -2,6 +2,12 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 
+# Custom class exception to not raise http exception in repository since that's part of the api, not db
+class NotFoundException(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+
 class MateriaCreate(BaseModel):
     nombre: str
 
@@ -39,3 +45,7 @@ class LeadCreate(BaseModel):
     direccion: Optional[str]
     tel: Optional[int]
     cursados: List[CursadoCreate]
+
+
+class LeadReturn(BaseModel):
+    lead_id: int

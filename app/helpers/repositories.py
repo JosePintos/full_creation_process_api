@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from ..db.models import DBCarrera, DBCursado, DBInscripcionMateria, DBLead, DBMateria
-from fastapi import HTTPException, Query
+from fastapi import Query
+from ..db.schemas import NotFoundException
 
 
 class LeadRepository:
@@ -40,6 +41,10 @@ class LeadRepository:
         Returns:
             list[DBLead]: Lista de todos los objetos DBLead en la base de datos.
         """
+        if not isinstance(limit, int) or not isinstance(offset, int):
+            raise NotFoundException(f"Illegal limit/offset value. Only numbers >= 0.")
+        if limit < 0 or offset < 0:
+            raise NotFoundException(f"Illegal limit/offset value. Only numbers >= 0.")
 
         return (
             self.db.execute(select(DBLead).limit(limit).offset(offset)).scalars().all()
@@ -62,9 +67,7 @@ class LeadRepository:
             select(DBLead).where(DBLead.lead_id == lead_id)
         ).scalar()
         if db_lead is None:
-            raise HTTPException(
-                status_code=404, detail=f"Lead with id {lead_id} not found."
-            )
+            raise NotFoundException(f"Lead with id {lead_id} not found.")
         return db_lead
 
 
