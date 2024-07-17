@@ -37,12 +37,11 @@ Siguiendo este diseño, el código sigue la siguiente lógica:
   7. Se agregan las inscripciones a cada cursado y se crean los cursados.
   8. Se agregan los cursados al nuevo lead y se confirma la creación.
 
-## No se Contempló:
+## Se agregó:
 
 - Testing
 - Validación de casos particulares
 - Manejo de errores y edge cases
-- Diseño de un front end y la respectiva integración con el back end
 - Despliegue en Docker
 
 ## Anexo
