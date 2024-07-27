@@ -1,28 +1,28 @@
+from typing import Generator
 from sqlalchemy import create_engine, StaticPool
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 from ..main import app
-from ..db.connection import get_db
+from ..db.connection import get_db, test_engine, session_test
 from ..db.models import Base
 import pytest
-from sqlalchemy_utils import database_exists, drop_database, create_database
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 # Setup in-memory sqlite db
-DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# DATABASE_URL = "sqlite:///:memory:"
+# engine = create_engine(
+#     DATABASE_URL, connect_args={"check_same_thread": False}, poolclass=StaticPool
+# )
+# TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 # override dependency in app fastapi
 def override_get_db():
     try:
-        db = TestingSessionLocal()
+        db = session_test()
         yield db
     finally:
         db.close()
@@ -35,13 +35,18 @@ client = TestClient(app)
 
 
 @pytest.fixture(scope="module", autouse=True)
-def setup_and_teardown():
+def setup_and_teardown() -> Generator[Session, None, None]:
     # create table in db
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=test_engine)
     # create session
-    session = TestingSessionLocal()
-    yield
-    Base.metadata.drop_all(bind=engine)
+    session = session_test()
+    try:
+        yield session
+    finally:
+        # Drop all tables after tests are done
+        Base.metadata.drop_all(bind=test_engine)
+        # Remove the session to ensure it's properly closed
+        session_test.remove()
 
 
 INPUT = {
